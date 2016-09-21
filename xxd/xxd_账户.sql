@@ -1,18 +1,23 @@
 -- 账户
 SELECT * FROM XXD_ACCOUNT
-where userid in (114432) and pcode in ('1001','1006');
+where userid in (114363) and pcode in ('1001','1006');
 
 
 SELECT * FROM XXD_ACCOUNT where userid=114642;
 
 UPDATE XXD_ACCOUNT SET USABLE=0,FROZEN=0,COLLECTION=0,REPAYMENT=0,ACCOUNTTOTAL=0 WHERE USERID=114432 AND PCODE=1006;
-update xxd_account set usable=100000000,frozen=100000000,collection=0,repayment=0,accounttotal=200000000 where userid=114363 and pcode=1001;
+update xxd_account set usable=10000000,frozen=0,collection=0,repayment=0,accounttotal=10000000 where userid=114363 and pcode=1001;
 
 update xxd_account set usable=1000,frozen=0,accounttotal=1000 where userid=114446 and pcode='1001'
 
 update xxd_account set usable=usable-10 where userid=114432 and pcode=1001;
 
 -- 资金类型（1转出，2转入，3内部转出，4内部转入，5冻结，6解冻）
+SELECT REMARK ,busitime,ID,USERID,BUSIID,PCODE,USABLE,WORKMONEY,FROZEN,OPERATORTYPE,MONEYTYPE,SCHEMEID,STATUS,ISSHOW
+FROM XXD_ACCOUNT_LOG
+WHERE  userid=114363
+ORDER BY ADDTIME DESC;
+
 SELECT REMARK ,busitime,ID,USERID,BUSIID,PCODE,USABLE,WORKMONEY,FROZEN,OPERATORTYPE,MONEYTYPE,SCHEMEID,STATUS,ISSHOW
 FROM XXD_ACCOUNT_LOG
 WHERE  userid=114432

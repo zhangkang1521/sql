@@ -3,9 +3,6 @@ ALTER TABLE XXD_message_site
 --ADD REALTIME NUMBER(38, 0)
 add BORROWID varchar2(30)
 
-COMMENT ON COLUMN XXD_MESSAGE_SITE.BORROWID IS '打款截图对应的标的id'
-COMMENT ON COLUMN XXD_BORROW.TIMETYPE IS ' 借款期限单位：1：月 2：天 3：季'    
-comment on column XXD_BORROW.TIMELIMIT IS '还款总期数'
 
 
 
@@ -168,44 +165,63 @@ WHERE (nvl(feevalue,0) = 0
   AND TRUNC(SYSDATE) >= TRUNC(BR.REPAYMENTTIME)
 ORDER BY br.porder
 
--- 重置罚金
+
+-- 重置罚息基数
 UPDATE xxd_borrow_laterinterest bl
-SET bl.laterinterest =
-  (SELECT CASE
-              WHEN (trunc(to_date('2017-01-07 00:00:00','yyyy-mm-dd hh24:mi:ss')) - trunc(br.repaymenttime)) <=3
-                   OR (trunc(to_date(bl2.laterdate,'yyyymmdd')) - trunc(br.repaymenttime)) < 0 THEN 0
-              WHEN (TRUNC (TO_DATE (bl2.laterdate, 'yyyymmdd')) - TRUNC (br.repaymenttime)) >=4 THEN 1
-              ELSE (TRUNC(TO_DATE(BL2.LATERDATE,'yyyymmdd')) - TRUNC(BR.REPAYMENTTIME))
-          END * 0.008 * bl2.baseamount
-   FROM xxd_borrow_repayment br,
-        xxd_borrow_laterinterest bl2
-   WHERE br.repaymentid = bl2.repaymentid
-     AND BL2.LATERINTERESTID = BL.LATERINTERESTID)
-WHERE BL.REPAYMENTID = 'BR2016090232560'
-  AND BL.LATERDATE >= '20160107'
+SET bl.lastmodify=0,
+    bl.modifydate=sysdate,
+    bl.modifyip='127.0.0.1',
+                bl.baseamount =
+  (SELECT nvl(br.repaymentaccount, 0) - nvl(br.repaymentyesaccount, 0) + nvl(bf.fee, 0) - nvl(bf.realfee, 0)
+   FROM xxd_borrow_repayment br
+   LEFT JOIN xxd_borrow_fee bf ON bf.borrowid = br.borrowid
+   AND br.porder = bf.porder
+   AND bf.feetype = 3
+   WHERE br.repaymentid = bl.repaymentid)
+WHERE bl.repaymentid = 'BR2016091438021'
+  AND bl.laterdate >= to_char(sysdate,'yyyymmdd') -- 大于实际还款时间的重置
+ 
   
-Params:[2017-01-07 00:00:00.0, 0.008, BR2016090232560, 2017-01-07 00:00:00.0]
+  --
+  SELECT nvl(br.repaymentaccount, 0) - nvl(br.repaymentyesaccount, 0) + nvl(bf.fee, 0) - nvl(bf.realfee, 0)
+   FROM xxd_borrow_repayment br
+   LEFT JOIN xxd_borrow_fee bf ON bf.borrowid = br.borrowid
+   AND br.porder = bf.porder
+   AND bf.feetype = 3
+   WHERE br.repaymentid = 'BR2016091438021'
+  
+  
+-- 重置罚息
+update xxd_borrow_laterinterest bl
+   set bl.lastmodify    = 0,
+       bl.modifydate    = sysdate,
+       bl.modifyip      = '127.0.0.1',
+       bl.laterinterest = (select (case
+                                    when (trunc(to_date(bl2.laterdate,
+                                                        'yyyymmdd')) -
+                                         trunc(br.repaymenttime)) = 3 then
+                                     4
+                                    else
+                                     1
+                                  end) * 0.003 * bl2.baseamount
+                             from xxd_borrow_repayment     br,
+                                  xxd_borrow_laterinterest bl2
+                            where br.repaymentid = bl2.repaymentid
+                              and bl2.laterinterestid = bl.laterinterestid)
+ where bl.repaymentid = ?
+   and bl.laterdate >= to_char(?, 'yyyymmdd') -- 大于实际还款时间的重置
 
-SELECT * FROM XXD_BORROW_LATERINTEREST BL
-WHERE BL.REPAYMENTID = 'BR2016090232560'
- AND BL.LATERDATE >= '20160107'
-
-   
-SELECT CASE
-              WHEN (trunc(to_date('2017-01-07 00:00:00','yyyy-mm-dd hh24:mi:ss')) - trunc(br.repaymenttime)) <=3
-                   OR (trunc(to_date(bl2.laterdate,'yyyymmdd')) - trunc(br.repaymenttime)) < 0
-              THEN 0
-              WHEN (TRUNC (TO_DATE (BL2.LATERDATE, 'yyyymmdd')) - TRUNC (BR.REPAYMENTTIME)) >=4
-              THEN 1
-              ELSE (TRUNC(TO_DATE(BL2.LATERDATE,'yyyymmdd')) - TRUNC(BR.REPAYMENTTIME))
-              END
-              * 0.008 * bl2.baseamount
-   FROM xxd_borrow_repayment br,
-        xxd_borrow_laterinterest bl2
-   WHERE BR.REPAYMENTID = BL2.REPAYMENTID
-     AND BL2.LATERINTERESTID = 113215
+     0.003, BR2016091438021, 2016-10-18 00:00:00.0
      
-     
+     select (case
+              when (trunc(to_date(bl2.laterdate, 'yyyymmdd')) - trunc(br.repaymenttime)) = 3 
+                then 4
+             else 1
+             end) * 0.003 * bl2.baseamount
+   from xxd_borrow_repayment     br, xxd_borrow_laterinterest bl2
+   where br.repaymentid = bl2.repaymentid
+         and bl2.laterinterestid = bl.laterinterestid
+         and br.repaymentid='BR2016091438021'
 
      
 
