@@ -1,21 +1,20 @@
--- 账户
+-- 账户 1004 新元宝 1006步步高升
 SELECT * FROM XXD_ACCOUNT
-where userid in (114363) and pcode in ('1001','1006');
+where userid in (114432) and pcode in ('1001','1004','1006');
+
+SELECT sum(usable) FROM XXD_ACCOUNT where userid in (114363)
 
 
-SELECT * FROM XXD_ACCOUNT where userid=114642;
+SELECT * FROM XXD_user where username like '%zhangkang%';
 
 UPDATE XXD_ACCOUNT SET USABLE=0,FROZEN=0,COLLECTION=0,REPAYMENT=0,ACCOUNTTOTAL=0 WHERE USERID=114432 AND PCODE=1006;
-update xxd_account set usable=10000000,frozen=0,collection=0,repayment=0,accounttotal=10000000 where userid=114363 and pcode=1001;
+update xxd_account set usable=10000000,frozen=0,collection=0,repayment=0,accounttotal=10000000 where userid=114446 and pcode=1001;
 
-update xxd_account set usable=1000,frozen=0,accounttotal=1000 where userid=114446 and pcode='1001'
-
-update xxd_account set usable=usable-10 where userid=114432 and pcode=1001;
 
 -- 资金类型（1转出，2转入，3内部转出，4内部转入，5冻结，6解冻）
 SELECT REMARK ,busitime,ID,USERID,BUSIID,PCODE,USABLE,WORKMONEY,FROZEN,OPERATORTYPE,MONEYTYPE,SCHEMEID,STATUS,ISSHOW
 FROM XXD_ACCOUNT_LOG
-WHERE  userid=114363
+WHERE  userid=50
 ORDER BY ADDTIME DESC;
 
 SELECT REMARK ,busitime,ID,USERID,BUSIID,PCODE,USABLE,WORKMONEY,FROZEN,OPERATORTYPE,MONEYTYPE,SCHEMEID,STATUS,ISSHOW
@@ -49,14 +48,27 @@ values('OPERATETYPE', 'deduct_car_manage_fee', '设备及保管费',  1, sysdate, '127
 
 -- redis 消息 处理状态 1已发送2已处理
 -- topic : step_quit_topic: 步步高升退出 create_sysuser_trade_apply_topic 系统发起债权转让 redis_msg_recheck_success_channel 满标
--- recharge_trigger_repay_topic 贷后还款
+-- recharge_trigger_repay_topic 贷后还款 borrow_webservice_commprod_tender_topic 短期理财产品投标
 select id,topic,addtime,operatetime,status,message
 FROM XXD_REDIS_MSG
---where topic='create_sysuser_trade_apply_topic'
-order by addtime desc
+--where status=1
+--where topic like '%trade_to_matching_topic%' 
+order by id desc
+
+update XXD_REDIS_MSG set status=1 where id=545172
+
+select * from xxd_message_site_sendlogs
+--where userid=114446
+order by sendtime desc
+
+update xxd_redis_msg set message='{"busiId":"OS20160929002","ip":"127.0.0.1","redisMsgId":544763}'
+where id=544763
+
+
 
 delete from XXD_REDIS_MSG
 
+select * from xxd_sms
 
 -- 逾期处理
 update xxd_borrow_repayment set status=1
@@ -109,4 +121,6 @@ where userid=114363
 
 SELECT * FROM XXD_DIC_COMMON
 where typecode='BORROW_PAYMENTMETHOD'
+
+
 

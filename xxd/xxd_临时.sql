@@ -1,9 +1,332 @@
-ALTER TABLE XXD_message_site
---ADD CHANNEL VARCHAR2(100)
---ADD REALTIME NUMBER(38, 0)
-add BORROWID varchar2(30)
+ select
+                '新元宝' || os.closeterm || '个月' title1,
+                os.pname title2,
+                add_months(os.opensaleend,
+                os.closeterm) REPAYTIME,
+                '1/1' PORDER,
+                ou.account REPAYCAPITAL,
+                decode(ou.status,
+                1,
+                ou.expectedInterest,
+                FLOATPROFIT+BALANCEMONEY) REPAYINTEREST,
+                decode(ou.status,
+                1,
+                0,
+                1) status    
+            from
+                xxd_optimize_userscheme ou,
+                xxd_optimize_scheme os   
+            where
+                ou.schemeid = os.schemeid     
+                and ou.userid = 114433    
+                and os.version = 'v2.0' 
+                
+select decode(5, 1, 'a', 2, 'b') from dual                
 
 
+SELECT XXBDEPLOYID,
+          CNAME,
+          TOTALACCOUNT,
+          NUMCOUNT,
+          SUBACCOUNT,
+          APR,
+          TIMELIMIT,
+          LOWESTTENDER,
+          MOSTTENDER,
+          STYLE,
+          STATUS,
+          ADDTIME,
+          DEPLOYTIME,
+          LASTMODFY,
+          MODIFYTIME,
+          TENDNUM,
+          TENDSUM,
+          UNTENDNUM,
+          UNTENDSUM,
+          FLOWNUM,
+          FLOWSUM,
+          NOTICE_ID1,
+          NOTICE_ID2,
+          NOTICE_ID3,
+          NOTICE_ID4,
+          NOTICE_ID5,
+          ISSTATISTICS VALIDDAYS
+   FROM XXD_XXBAO_BORROW t
+   WHERE 1=1
+     AND t.btype = 2
+     and timelimit=3
+   ORDER BY t.ADDTIME DESC
+ 
+  AND ((s.version='v1.0' and s.minapr<9) or (s.version='v2.0')) 
+ORDER BY FN_RANDOM
+
+select us.status, us.SCHEMEID, us.ACCOUNT, us.REMACCOUNT, us.USERID from xxd_optimize_userscheme us,xxd_optimize_scheme s  
+where us.schemeid = s.schemeid and us.status = 1 and remaccount>0 AND ((s.version='v1.0' and s.minapr<=117) or (s.version='v2.0'))  
+and s.OPENSALEEND < sysdate and add_months(s.OPENSALEEND,s.CLOSETERM) >= sysdate 
+--and (case when us.account<? then us.remaccount         
+--when us.remaccount < us.account * ?  then us.remaccount         else us.account * ? end) >= ? 
+--and exists (select 1 from xxd_account xa where userid=us.userid and pcode='1004' and usable>= ?) 
+and s.version = 'v2.0'
+
+
+
+
+
+
+-- 债权转让详情 --
+SELECT tr.requestid,tr.tenderid,xb.borrowid,xb.name borrowName, xb.paymentMethod,xb.period,xb.periodunit, tr.funds,xb.type borrowType,xb.apr AS rateyear,
+to_char(t.nextRepaymentTime,'yyyy-MM-dd') nextRepaymentTime,to_char(tp.addTime,'yyyy.MM.dd') outTime,tr.note,tr.userid,bt.effectiveMoney,tr.status,tr.rate, tr.transFee, 
+tr.apr,tr.reqMethod ,tr.status,decode(tr.status,2,tp.terms,t.remainNumber) remainNumber ,(xb.timeLimit-decode(tr.status,2,tp.terms,t.remainNumber)) receivedNumber ,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    decode(tr.status,2,tp.collectamount,t.repaymentAmount) repaymentAmount ,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    decode(tr.status,2,tp.collectInterest,t.repaymentInterest) repaymentInterest ,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                    decode(tr.status,2,tr.amount,t.repayCapital) repayCapital
+FROM xxd_trade_request tr
+LEFT JOIN
+  (SELECT requestid,
+          addTime,
+          collectamount,
+          collectinterest,
+          terms
+   FROM xxd_trade_pack) tp ON tp.requestid = tr.requestid
+INNER JOIN
+  (SELECT tenderid,
+          borrowid,
+          effectiveMoney
+   FROM xxd_borrow_tender) bt ON tr.tenderid=bt.tenderid
+INNER JOIN
+  (SELECT *
+   FROM xxd_borrow) xb ON bt.borrowid=xb.borrowid
+LEFT JOIN
+  (SELECT tenderid,
+          count(*) remainNumber,
+          min(repayTime) nextRepaymentTime,
+          sum(repayAccount) repaymentAmount,
+          sum(repayInterest) repaymentInterest,
+          sum(repayCapital) repayCapital
+   FROM xxd_BORROW_COLLECTION
+   WHERE status=0
+   GROUP BY tenderid) t ON t.tenderid=bt.tenderid
+WHERE tr.requestId='TR2016110901677'
+  AND xb.TYPE IN (1,
+                  2,
+                  8,
+                  9,
+                  11,
+                  12,
+                  10,
+                  13,
+                  14)
+-- 债权转让详情 end --      
+
+
+
+
+----------------------------- BorrowQueryDao.java line:442 --------------------------------
+ select
+        a.earn+b.earn 
+    from
+        (select
+            nvl(round(sum(us.account*sc.minapr*closeterm/12/100),
+            2),
+            0) as earn  
+        from
+            xxd_optimize_scheme sc,
+            xxd_optimize_userscheme us   
+        where
+            sc.schemeid = us.schemeid 
+            and sc.version='v2.0' 
+            and us.userid = 114432
+            and us.status = 7   
+            and us.enddate>=to_date(to_char(sysdate,'yyyy')||'0101 00:00:00','yyyymmdd hh24:mi:ss') )a,
+        (select
+            nvl(round(sum(us.account*sc.minapr*decode(sign(floor(us.enddate-sc.opensaleend)-sc.closeterm*30),
+            1,
+            sc.closeterm*30,
+            floor(us.enddate-sc.opensaleend))/360/100),
+            2),
+            0) as earn  
+        from
+            xxd_optimize_scheme sc,
+            xxd_optimize_userscheme us   
+        where
+            sc.schemeid = us.schemeid 
+            and sc.version='v2.0' 
+            and us.userid = 114432 
+            and us.status = 6  )b
+
+
+
+select sum(floatprofit+balancemoney)
+from  xxd_optimize_userscheme
+where userid=114432
+  
+  select to_date(to_char(sysdate,'yyyy')||'0101 00:00:00','yyyymmdd hh24:mi:ss') from dual
+  
+------------------------------------------------------------------------------------------------
+
+---------------------------BorrowQueryDao.java line: 1091----------------------------------------------------------------------
+ select
+        a.earn+b.earn 
+    from
+        (select
+            nvl(round(sum(us.account*sc.minapr*closeterm/12/100),
+            2),
+            0) as earn  
+        from
+            xxd_optimize_scheme sc,
+            xxd_optimize_userscheme us   
+        where
+            sc.schemeid = us.schemeid 
+            and sc.version='v2.0' 
+            and us.userid = 114432
+            and us.status = 7   
+            and to_char(us.enddate,'yyyymm') = '201701')a,
+        (select
+            nvl(round(sum(us.account*sc.minapr*decode(sign(floor(us.enddate-sc.opensaleend)-sc.closeterm*30),
+            1,
+            sc.closeterm*30,
+            floor(us.enddate-sc.opensaleend))/360/100),
+            2),
+            0) as earn  
+        from
+            xxd_optimize_scheme sc,
+            xxd_optimize_userscheme us   
+        where
+            sc.schemeid = us.schemeid 
+            and sc.version='v2.0' 
+            and us.userid = 114432 
+            and us.status = 6  
+            and to_char(us.enddate,'yyyymm') = '201610')b
+            
+select nvl(sum(floatprofit+balancemoney),0)
+from  xxd_optimize_userscheme us,xxd_optimize_scheme sc
+where sc.schemeid = us.schemeid 
+and sc.version='v2.0' 
+and userid=114432 
+and  to_char(us.enddate,'yyyymm') = '201701'       
+            
+------------------------------------------------------------------------------ 
+
+--------------------------UserSchemeDao.java line:289----------------------------------------------------
+  select
+        * 
+    from
+        ( select
+            yy.username ,
+            yy.realname ,
+            xx.account ,
+            to_char(xx.addtime,
+            'yyyy-mm-dd hh24:mi:ss') addtime,
+            to_char(xx.enddate,
+            'yyyy-mm-dd hh24:mi:ss') enddate,
+            xx.realprofit ,
+            xx.expectedprofir ,
+            (xx.expectedprofir-xx.realprofit) as shortprofit 
+        from
+            ( select
+                us.userid,
+                us.account,
+                sc.minapr,
+                us.addtime,
+                us.enddate,
+                (l.workmoney-us.account) as realprofit,
+                --trunc(us.account*sc.minapr*sc.closeterm/12/100,
+                --2) as expectedprofir 
+                us.expectedinterest as expectedprofir
+            from
+                xxd_optimize_userscheme us,
+                xxd_account_log l,
+                xxd_optimize_scheme sc                   
+            where
+                us.userid = l.userid                    
+                and us.schemeid = l.schemeid                    
+                and us.schemeid = sc.schemeid                   
+                and us.status = 7                    
+                --and us.enddate >= to_date('2016-01-01 01:00:00','yyyy-mm-dd hh24:mi:ss')                   
+                --and us.enddate <= to_date('2018-01-01 01:00:00','yyyy-mm-dd hh24:mi:ss')                   
+                and us.collectiontype = 1
+                and sc.version = 'v1.0'
+                and l.operatortype = 'xplan_quit_usable_inner_out'                   )xx,
+            (select
+                u.userid,
+                u.username,
+                bs.realname 
+            from
+                xxd_user u 
+            left join
+                xxd_user_baseinfo bs 
+                    on u.userid = bs.userid) yy 
+        where
+            xx.userid = yy.userid 
+            and xx.realprofit<xx.expectedprofir
+        ) 
+    union
+    all (
+        select
+            yy.username ,
+            yy.realname ,
+            us.account ,
+            to_char(us.addtime,
+            'yyyy-mm-dd hh24:mi:ss') addtime,
+            to_char(us.enddate,
+            'yyyy-mm-dd hh24:mi:ss') enddate,
+            xx.realprofit ,
+            trunc(us.account*sc.minapr*sc.closeterm/12/100,
+            2) as expectedprofir ,
+            trunc(us.account*sc.minapr*sc.closeterm/12/100,
+            2)-xx.realprofit as shortprofit                   
+        from
+            xxd_optimize_scheme sc,
+            xxd_optimize_userscheme us,
+            (select
+                l.userid,
+                l.schemeid,
+                sum(l.workmoney) realprofit                   
+            from
+                xxd_optimize_userscheme us,
+                xxd_account_log l                   
+            where
+                us.schemeid = l.schemeid 
+                and us.userid = l.userid 
+                --and us.collectiontype = 2 
+                and us.status = 7                   
+               -- and us.enddate >= to_date('2016-01-01 01:00:00','yyyy-mm-dd hh24:mi:ss')                   
+               -- and us.enddate <= to_date('2018-01-01 01:00:00','yyyy-mm-dd hh24:mi:ss')                   
+                and l.remark like '%还款利息%' 
+                and l.pcode = '1001'                   
+            group by
+                l.userid,
+                l.schemeid)xx,
+            (select
+                u.userid,
+                u.username,
+                bs.realname 
+            from
+                xxd_user u 
+            left join
+                xxd_user_baseinfo bs 
+                    on u.userid = bs.userid) yy                  
+        where
+            yy.userid = xx.userid 
+            and sc.schemeid = xx.schemeid                    
+            and xx.userid = us.userid 
+            and xx.schemeid = us.schemeid                    
+            and xx.realprofit < trunc(us.account*sc.minapr*sc.closeterm/12/100,2)
+            and sc.version='v2.0'
+        )  
+--------------------------UserSchemeDao.java line:289 end ----------------------------------------------------
+
+SELECT usd.*
+   FROM xxd_optimize_scheme sc,
+        xxd_optimize_userscheme us,
+        XXD_OPTIMIZE_USERDETAIL usd
+   WHERE sc.schemeid = us.schemeid
+     AND   us.userSchemeId = usd.userSchemeId
+     AND sc.version='v2.0'
+     AND us.userid = 114432
+     AND us.status = '6' AND us.enddate>=to_date(to_char(sysdate,'yyyy')||'0101 00:00:00','yyyymmdd hh24:mi:ss')
+
+SELECT to_date(to_char(sysdate,'yyyy')||'0101 00:00:00','yyyymmdd hh24:mi:ss') FROM DUAL
 
 
 
@@ -222,7 +545,106 @@ update xxd_borrow_laterinterest bl
    where br.repaymentid = bl2.repaymentid
          and bl2.laterinterestid = bl.laterinterestid
          and br.repaymentid='BR2016091438021'
+         
+-- 获取债权转让详情
 
+SELECT tr.requestid,
+       tr.tenderid,
+       xb.borrowid,
+       xb.name borrowName,
+       xb.paymentMethod,
+       xb.period,
+       xb.periodUnit,
+       tr.funds,
+       xb.type borrowType,
+       xb.apr AS rateyear,
+       to_char(t.nextRepaymentTime,'yyyy-MM-dd') nextRepaymentTime,
+       to_char(tp.addTime,'yyyy.MM.dd') outTime,
+       tr.note,
+       tr.userid,
+       bt.effectiveMoney,
+       tr.status,
+       tr.rate,
+       tr.transFee,
+       tr.apr,
+       tr.reqMethod,
+       decode(tr.status,2,tp.terms,t.remainNumber) remainNumber,
+       (xb.timeLimit-decode(tr.status,2,tp.terms,t.remainNumber)) receivedNumber,
+       decode(tr.status,2,tp.collectamount,t.repaymentAmount) repaymentAmount,
+       decode(tr.status,2,tp.collectInterest,t.repaymentInterest) repaymentInterest,
+       decode(tr.status,2,tr.amount,t.repayCapital) repayCapital
+FROM xxd_trade_request tr
+LEFT JOIN
+  (SELECT requestid,
+          addTime,
+          collectamount,
+          collectinterest,
+          terms
+   FROM xxd_trade_pack) tp ON tp.requestid = tr.requestid
+INNER JOIN
+  (SELECT tenderid,
+          borrowid,
+          effectiveMoney
+   FROM xxd_borrow_tender) bt ON tr.tenderid=bt.tenderid
+INNER JOIN
+  (SELECT borrowid,
+          name,
+          timeLimit,
+          TYPE,
+          apr,
+          paymentMethod,
+          period,
+          periodUnit
+   FROM xxd_borrow) xb ON bt.borrowid=xb.borrowid
+LEFT JOIN
+  (SELECT tenderid,
+          count(*) remainNumber,
+          min(repayTime) nextRepaymentTime,
+          sum(repayAccount) repaymentAmount,
+          sum(repayInterest) repaymentInterest,
+          sum(repayCapital) repayCapital
+   FROM xxd_BORROW_COLLECTION
+   WHERE status=0
+   GROUP BY tenderid) t ON t.tenderid=bt.tenderid
+WHERE tr.requestId='TR2016110433771'
+  AND xb.type IN (1,
+                  2,
+                  8,
+                  9,
+                  11,
+                  12,
+                  10,
+                  13,
+                  14)
+         
+-- 新元宝投债权
+SELECT us.status,
+       us.SCHEMEID,
+       us.ACCOUNT,
+       us.REMACCOUNT,
+       us.USERID
+FROM xxd_optimize_userscheme us,
+     xxd_optimize_scheme s
+WHERE us.schemeid = s.schemeid
+  AND us.status = 1  -- 投标中
+  AND remaccount>0 
+  AND ((s.version='v1.0'
+        AND s.minapr<=7)
+       OR (s.version='v2.0'))
+  AND s.OPENSALEEND < sysdate
+  AND add_months(s.OPENSALEEND,s.CLOSETERM) >= sysdate
+  AND (CASE
+           WHEN us.account<20000 THEN us.remaccount
+           WHEN us.remaccount < us.account * 0.2 THEN us.remaccount
+           ELSE us.account * 0.2
+       END) >= 10000
+  AND EXISTS
+    (SELECT 1
+     FROM xxd_account xa
+     WHERE userid=us.userid
+       AND pcode='1004'
+       AND usable>= 10000)
+  AND s.version = 'v2.0'
      
-
+select * from xxd_sysconfig where syskey like '%OP%'
     

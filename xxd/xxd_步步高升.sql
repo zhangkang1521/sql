@@ -1,5 +1,5 @@
 SELECT * FROM XXD_STEP
-update XXD_STEP set quitsteps=1
+update XXD_STEP set maxapr=12 
 
 delete from XXD_STEP where stepid='ST201609013'
 

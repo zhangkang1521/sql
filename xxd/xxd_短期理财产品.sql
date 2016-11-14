@@ -8,45 +8,29 @@ SELECT * FROM XXD_COMMPROD_DEPLOY
 where status=1
 
 
+DELETE FROM XXD_BORROW_TENDER WHERE USERID=114446;
+commit;
+
+update XXD_COMMPROD_DEPLOY set tendsum=0
+where deployid='QT2016362200024'
+
+
 UPDATE XXD_COMMPROD_DEFINE SET LIMITNUM=3000 WHERE PRODSPELL='monthgold';
 
-update XXD_COMMPROD_DEPLOY set mosttender=3000 where deployid='YJ2016532700171'
+update XXD_COMMPROD_DEPLOY set startdate=to_date('2016-10-27 10:00:00', 'yyyy-mm-dd hh24:mi:ss'),enddate=to_date('2016-11-1 10:55:35', 'yyyy-mm-dd hh24:mi:ss') 
+where deployid='YJ2016251900172';
+commit;
 
-update XXD_COMMPROD_DEPLOY set status=2 where deployid='QT2016342700022'
+update XXD_COMMPROD_DEPLOY set amount=110000,tendsum=0 where deployid='QT2016362200024'
 
--- 查询投了这期月进斗金的投标信息
-select * from xxd_borrow_tender
-where borrowid in(
-  select borrowid from xxd_borrow
-  where content in('月进斗金','monthgold')
-) and userid=114432
-order by addtime desc 
-
-delete from xxd_borrow_tender where borrowid in(
-  select borrowid from xxd_borrow
-  where content in('月进斗金','monthgold')
-) and userid=114432
+DELETE FROM XXD_BORROW_TENDER WHERE USERID=114446;
 
 
--- 查询 七天大胜 投标信息
-select * from xxd_borrow_tender
-where borrowid in(
-  select borrowid from xxd_borrow
-  where content in('七天大胜','sevengold')
-) --and userid=114446
-order by addtime desc 
 
+-- 借款表 产品发布 关联 一个发布产品对应多个借款
 SELECT * FROM XXD_COMMPORD_MAPPING
-where borrowid='BW201601048793'
+where borrowid='BW201609229983'
 
-SELECT * FROM XXD_COMMPROD_DEPLOY
-where deployid='QT2016510400003'
+SELECT * FROM XXD_COMMPORD_NOTICE
+where borrowid='BW201609229983'
 
-
-
- SELECT BT.EFFECTIVEMONEY, BT.ADDTIME, U.NICKNAME AS USERNAME      
- FROM XXD_BORROW_TENDER BT      
- INNER JOIN XXD_BORROW B ON BT.BORROWID=B.BORROWID    
- INNER JOIN XXD_USER U ON BT.USERID=U.USERID 
- WHERE B.TYPE=17 AND bt.status>0 AND B.CONTENT ='sevengold'
- ORDER BY BT.ADDTIME DESC

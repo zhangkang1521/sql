@@ -1,44 +1,31 @@
-/** 
-  
- */
+SELECT * from all_tables
+where table_name = 'EMPLOYEES'
 
-select * 
-from oe.orders o,
-    (select /*+ NO_MERGE */sales_rep_id
-     from oe.orders
-    ) o_view
-where o.sales_rep_id = o_view.sales_rep_id(+)
-and o.order_total > 100000;
+SELECT * from dba_synonyms
+where owner='SYS'
 
-select * from oe.orders
-where order_total>100000
+select * from all_indexes
+where table_name='TB_USER'
 
-select * from oe.orders
-where sales_rep_id=161 and order_total>100000
+select * from tb_user
 
-select * from oe.orders
-where sales_rep_id is null and order_total>100000
+select count(*) from tb_user
+select count(username) from scott.tb_user
+select count(gender) from scott.tb_user
 
--- 查出所有管理者id 子查询解嵌套
-select e.* from oe.employees e
-where e.employee_id in(
-  select /*+ NO_UNNEST */ manager_id from oe.departments
-)
 
-select e.*,d.department_name from oe.employees e
-left join oe.departments d on e.employee_id = d.manager_id
-where d.manager_id is not null
 
-select * from oe.employees
-where employee_id=205
+create index idx_tb_user_0 on scott.tb_user(username)
 
-select * from oe.departments
---where manager_id=147
-order by manager_id
+select e1.*, e2.avg_salary
+from employees e1,
+  (
+    select department_id,avg(salary) as avg_salary
+    from employees
+    group by department_id   
+  ) e2
+where e1.department_id = e2.department_id  
+and e1.salary > e2.avg_salary
+and e1.department_id=60
 
--- 关联子查询
-select * 
-from oe.employees e1
-where e1.salary > (
-  sele
-)
+select * from emp
