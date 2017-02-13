@@ -1,0 +1,10 @@
+﻿-- 查看所有key
+stats items // 这条是命令
+STAT items:?:number 2
+STAT items:1:age 188
+END
+
+stats cachedump ? 0 // 
+
+// 清除缓存,并没有清除，必须重启？
+flush_all
