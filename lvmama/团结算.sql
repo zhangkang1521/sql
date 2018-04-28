@@ -1,0 +1,95 @@
+-- 团单项结算列表
+ SELECT c.* 
+ FROM FINANCE_GROUP_BUDGET B INNER JOIN FINANCE_GROUP_BUDGET_COST 
+C ON C.BUDGET_ID = B.BUDGET_ID 
+WHERE C.ISVALID = 'Y' AND C.SETTLEMENT_STATUS != 'SETTLEMENTING' 
+AND C.SETTLEMENT_STATUS != 'UNSETTLEMENTED' 
+
+
+SELECT * FROM FINANCE_GROUP_BUDGET 
+WHERE -- budget_id=137
+travel_group_code='20170830-991342'
+
+-- pay_status: NOPAY PARTPAY PAYED
+-- settlement_status: PENDINGSETTLEMENT:待结算， SETTLEMENTED:已结算
+-- SUBTOTAL_COSTS_FC: 应打款金额 ，pay_amount：已打款金额
+SELECT -- *
+    item_id,budget_id,travel_group_code,SUBTOTAL_COSTS_FC,pay_amount,APPROVE_STATUS,settlement_status,pay_status,isvalid,PRODUCT_MANAGER
+ FROM FINANCE_GROUP_BUDGET_COST
+-- where budget_id=64
+-- where item_id=58
+WHERE travel_group_code='20170825-991342'
+
+
+
+SELECT TRAVEL_GROUP_CODE,COUNT(*) FROM FINANCE_GROUP_BUDGET GROUP BY TRAVEL_GROUP_CODE
+HAVING COUNT(*)>1
+
+-- 团订单
+SELECT 
+  COUNT(DISTINCT S.SETTLEMENT_ITEM_ID) 
+FROM
+  SET_SETTLEMENT_ITEM S 
+  INNER JOIN FINANCE_GROUP_BUDGET_COST G 
+    ON S.TRAVEL_GROUP_CODE = G.TRAVEL_GROUP_CODE 
+WHERE S.TRAVEL_GROUP_CODE = '20170108-435317' 
+  AND G.ITEM_ID = '58' 
+  AND S.STATUS = 'NORMAL' 
+  
+  SELECT
+   settlement_item_id,order_id,order_item_meta_id,settlement_price,total_settlement_price,ACTUAL_SETTLEMENT_PRICE,quantity,product_price,actual_Pay,OUGHT_PAY,PRODUCT_PRICE,ITEM_REFUNDED_AMOUNT,supplier_name,STATUS,order_status,supplier_type,
+   order_payment_status,group_settle_flag,order_payment_time
+   ,bu_code,meta_product_manager,visit_time,product_id,TRAVEL_GROUP_CODE
+FROM set_settlement_item
+-- WHERE TRAVEL_GROUP_CODE='20170830-991342'
+WHERE order_id=  62965188
+  
+  
+-- 结算审核列表  ACT_TOTAL_COSTS
+SELECT c.* FROM FINANCE_GROUP_BUDGET B INNER JOIN FINANCE_GROUP_BUDGET_COST 
+C ON C.BUDGET_ID = B.BUDGET_ID WHERE C.ISVALID = 'Y' AND C.SETTLEMENT_STATUS = 'SETTLEMENTING' 
+
+-- 附加收入审核列表
+SELECT 
+  * 
+FROM
+  FINANCE_OTHER_INCOMING I 
+WHERE  I.TRAVEL_GROUP_CODE = '20170824-991342'  
+WHERE I.ISVALID = 'Y' 
+  AND I.APPROVE_STATUS != 'UNAPPROVE' 
+  
+-- 团预算成本
+SELECT * FROM FINANCE_GROUP_BUDGET 
+WHERE travel_group_code='20170822-991512' 
+
+
+
+-- 退款
+SELECT * FROM finance_group_usual
+WHERE order_id=62964456
+
+SELECT order_id,COUNT(*) FROM finance_group_usual
+GROUP BY order_id
+
+
+SELECT * FROM finance_group_budget_mamager
+
+SELECT * FROM etl_prem_user
+WHERE real_name='张康'
+
+ 
+ -- 删除团结算数据
+DELETE FROM finance_group_usual WHERE order_id IN(SELECT order_id FROM set_settlement_item WHERE TRAVEL_GROUP_CODE='20170830-991342');
+DELETE FROM FINANCE_GROUP_BUDGET WHERE travel_group_code='20170830-991342';
+DELETE FROM FINANCE_GROUP_BUDGET_COST WHERE travel_group_code='20170830-991342';
+DELETE FROM  set_settlement_item WHERE TRAVEL_GROUP_CODE='20170830-991342';
+
+SELECT * FROM set_settlement_item WHERE TRAVEL_GROUP_CODE='20170830-991342';
+
+UPDATE set_settlement_item SET TRAVEL_GROUP_CODE='20170830-991342' WHERE order_id=37689153
+
+SELECT * FROM finance_group_order_item 
+WHERE order_id=59055456
+
+SELECT * FROM FINANCE_GROUP_BUDGET_COST
+WHERE travel_group_code='20170822-991512'
